@@ -14,13 +14,9 @@
             @foreach (var parameter in Model.ParameterDescriptions)
             {
                 <li>
-                    @parameter.Name - @(parameter?.Type?.FullName ?? "Unknown") - @parameter.Source.ToString()
-                    @if (parameter.Constraints != null && parameter.Constraints.Any())
-                    {
-                        var constraints = parameter.Constraints;
-                        Write("-Constraint:" + string.Join(", ", constraints.Select(c => c.GetType()?.Name?.Replace("RouteConstraint", ""))));
+                    @{ 
+                        await Html.RenderPartialAsync("_ApiParameterDescription", parameter);
                     }
-                    - Default value: @(parameter?.DefaultValue ?? " none")
                 </li>
             }
         </ul>

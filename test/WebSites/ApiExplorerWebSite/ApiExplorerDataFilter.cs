@@ -55,8 +55,8 @@ namespace ApiExplorerWebSite
                 {
                     IsOptional = parameter.IsOptional,
                     Name = parameter.Name,
-                    Source = parameter.Source.ToString(),
-                    Type = parameter?.Type?.FullName,
+                    Source = parameter.Source?.Id,
+                    Type = parameter.Type?.FullName,
                     ConstraintTypes = parameter?.Constraints?.Select(c => c.GetType().Name).ToArray(),
                 };
 

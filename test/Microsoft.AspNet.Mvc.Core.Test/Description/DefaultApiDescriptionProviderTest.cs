@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc.ModelBinding;
@@ -584,6 +585,179 @@ namespace Microsoft.AspNet.Mvc.Description
             Assert.Same(formatters[0], formats[0].Formatter);
         }
 
+        [Fact]
+        public void GetApiDescription_ParameterDescription_ModelBoundParameter()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsProduct));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("product", parameter.Name);
+            Assert.Same(ApiParameterSource.ModelBinding, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromRouteData()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsId_Route));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("id", parameter.Name);
+            Assert.Same(ApiParameterSource.Path, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromQueryString()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsId_Query));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("id", parameter.Name);
+            Assert.Same(ApiParameterSource.Query, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromBody()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsProduct_Body));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("product", parameter.Name);
+            Assert.Same(ApiParameterSource.Body, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromHeader()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsId_Header));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("id", parameter.Name);
+            Assert.Same(ApiParameterSource.Header, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromServices()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsFormatters_Services));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("formatters", parameter.Name);
+            Assert.Same(ApiParameterSource.Hidden, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromCustomModelBinder()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsProduct_Custom));
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("product", parameter.Name);
+            Assert.Same(ApiParameterSource.Unknown, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_SourceFromDefault_ModelBinderAttribute_WithoutBinderType()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsProduct_Default));
+
+            // Act
+            System.Diagnostics.Debugger.Launch();
+            System.Diagnostics.Debugger.Break();
+
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var parameter = Assert.Single(description.ParameterDescriptions);
+            Assert.Equal("product", parameter.Name);
+            Assert.Same(ApiParameterSource.ModelBinding, parameter.Source);
+        }
+
+        [Fact]
+        public void GetApiDescription_ParameterDescription_ComplexDTO()
+        {
+            // Arrange
+            var action = CreateActionDescriptor(nameof(AcceptsProductChangeDTO));
+            var parameterDescriptor = action.Parameters.Single();
+
+            // Act
+            var descriptions = GetApiDescriptions(action);
+
+            // Assert
+            var description = Assert.Single(descriptions);
+
+            var id = Assert.Single(description.ParameterDescriptions, p => p.Name == "Id");
+            Assert.Same(parameterDescriptor, id.ParameterDescriptor);
+            Assert.Same(ApiParameterSource.Path, id.Source);
+            Assert.Equal(typeof(int), id.Type);
+
+            var product = Assert.Single(description.ParameterDescriptions, p => p.Name == "Product");
+            Assert.Same(parameterDescriptor, product.ParameterDescriptor);
+            Assert.Same(ApiParameterSource.Body, product.Source);
+            Assert.Equal(typeof(Product), product.Type);
+
+            var userId = Assert.Single(description.ParameterDescriptions, p => p.Name == "UserId");
+            Assert.Same(parameterDescriptor, userId.ParameterDescriptor);
+            Assert.Same(ApiParameterSource.Header, userId.Source);
+            Assert.Equal(typeof(string), userId.Type);
+
+            var comments = Assert.Single(description.ParameterDescriptions, p => p.Name == "Comments");
+            Assert.Same(parameterDescriptor, comments.ParameterDescriptor);
+            Assert.Same(ApiParameterSource.ModelBinding, comments.Source);
+            Assert.Equal(typeof(string), comments.Type);
+        }
+
         private IReadOnlyList<ApiDescription> GetApiDescriptions(ActionDescriptor action)
         {
             return GetApiDescriptions(action, CreateFormatters());
@@ -602,18 +776,12 @@ namespace Microsoft.AspNet.Mvc.Description
             constraintResolver.Setup(c => c.ResolveConstraint("int"))
                 .Returns(new IntRouteConstraint());
 
-            var modelMetadataProvider = new Mock<IModelMetadataProvider>(MockBehavior.Strict);
-            modelMetadataProvider
-                .Setup(mmp => mmp.GetMetadataForType(null, It.IsAny<Type>()))
-                .Returns((Func<object> accessor, Type type) =>
-                {
-                    return new ModelMetadata(modelMetadataProvider.Object, null, accessor, type, null);
-                });
+            var modelMetadataProvider = new EmptyModelMetadataProvider();
 
             var provider = new DefaultApiDescriptionProvider(
                 formattersProvider.Object,
                 constraintResolver.Object,
-                modelMetadataProvider.Object);
+                modelMetadataProvider);
 
             provider.Invoke(context, () => { });
             return context.Results;
@@ -645,6 +813,18 @@ namespace Microsoft.AspNet.Mvc.Description
             action.MethodInfo = GetType().GetMethod(
                 methodName ?? "ReturnsObject",
                 BindingFlags.Instance | BindingFlags.NonPublic);
+
+            action.Parameters = new List<ParameterDescriptor>();
+
+            foreach (var parameter in action.MethodInfo.GetParameters())
+            {
+                action.Parameters.Add(new ParameterDescriptor()
+                {
+                    BinderMetadata = parameter.GetCustomAttributes().OfType<IBinderMetadata>().FirstOrDefault(),
+                    Name = parameter.Name,
+                    ParameterType = parameter.ParameterType,
+                });
+            }
 
             return action;
         }
@@ -699,12 +879,76 @@ namespace Microsoft.AspNet.Mvc.Description
             return null;
         }
 
+        private void AcceptsProduct(Product product)
+        {
+        }
+
+        private void AcceptsProduct_Body([FromBody] Product product)
+        {
+        }
+
+        // This will show up as source = model binding
+        private void AcceptsProduct_Default([ModelBinder] Product product)
+        {
+        }
+
+        // This will show up as source = unknown
+        private void AcceptsProduct_Custom([ModelBinder(BinderType = typeof(BodyModelBinder))] Product product)
+        {
+        }
+
+        private void AcceptsId_Route([FromRoute] int id)
+        {
+        }
+
+        private void AcceptsId_Query([FromQuery] int id)
+        {
+        }
+
+        private void AcceptsId_Header([FromHeader] int id)
+        {
+        }
+
+        private void AcceptsFormatters_Services([FromServices] IOutputFormattersProvider formatters)
+        {
+        }
+
+        private void AcceptsProductChangeDTO(ProductChangeDTO dto)
+        {
+        }
+
         private class Product
         {
+            public int ProductId { get; set; }
+
+            public string Name { get; set; }
+
+            public string Description { get; set; }
         }
 
         private class Order
         {
+            public int OrderId { get; set; }
+
+            public int ProductId { get; set; }
+
+            public int Quantity { get; set; }
+
+            public decimal Price { get; set; }
+        }
+
+        private class ProductChangeDTO
+        {
+            [FromRoute]
+            public int Id { get; set; }
+
+            [FromBody]
+            public Product Product { get; set; }
+
+            [FromHeader]
+            public string UserId { get; set; }
+
+            public string Comments { get; set; }
         }
 
         private class MockFormatter : OutputFormatter
