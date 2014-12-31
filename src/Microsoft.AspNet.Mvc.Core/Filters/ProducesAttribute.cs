@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.AspNet.Mvc.Description;
 using Microsoft.Net.Http.Headers;
+
 
 namespace Microsoft.AspNet.Mvc
 {
@@ -31,7 +33,12 @@ namespace Microsoft.AspNet.Mvc
 
             if (objectResult != null)
             {
-                SetContentTypes(objectResult.ContentTypes);
+                // Check if FormatFilter has already set the content type
+                // If it has, dont override it
+                if (objectResult.ContentTypes.Count == 0)
+                {
+                    SetContentTypes(objectResult.ContentTypes);
+                }
             }
         }
 

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using Microsoft.AspNet.Mvc.ApplicationModels;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.OptionDescriptors;
-using Microsoft.AspNet.Mvc.HeaderValueAbstractions;
+using Microsoft.Net.Http.Headers;
 
 namespace Microsoft.AspNet.Mvc
 {

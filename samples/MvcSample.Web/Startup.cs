@@ -13,11 +13,11 @@ using Microsoft.Framework.ConfigurationModel;
 using Microsoft.Framework.DependencyInjection;
 using MvcSample.Web.Filters;
 using MvcSample.Web.Services;
+using Microsoft.AspNet.Mvc.Core.Filters;
 
 #if ASPNET50
 using Autofac;
 using Microsoft.Framework.DependencyInjection.Autofac;
-using Microsoft.AspNet.Mvc.Core.Filters;
 #endif
 
 namespace MvcSample.Web
@@ -66,8 +66,13 @@ namespace MvcSample.Web
                     services.Configure<MvcOptions>(options =>
                     {
                         options.Filters.Add(typeof(PassThroughAttribute), order: 17);
+<<<<<<< HEAD
 
                         options.AddXmlDataContractSerializerFormatter();
+=======
+                        var formatFilter = new FormatFilter();
+                        options.Filters.Add(formatFilter);
+>>>>>>> This is MVC part of feature URL Extensions. It does following:
                     });
                     services.Configure<RazorViewEngineOptions>(options =>
                     {
@@ -109,6 +114,9 @@ namespace MvcSample.Web
                     {
                         options.Filters.Add(typeof(PassThroughAttribute), order: 17);
                         options.AddXmlDataContractSerializerFormatter();
+
+                        var formatFilter = new FormatFilter();
+                        options.Filters.Add(formatFilter);
                     });
                 });
             }
