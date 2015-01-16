@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using Microsoft.AspNet.Mvc.Description;
 using Microsoft.Net.Http.Headers;
 
-
 namespace Microsoft.AspNet.Mvc
 {
     /// <summary>
@@ -35,7 +34,8 @@ namespace Microsoft.AspNet.Mvc
             {
                 // Check if FormatFilter has already set the content type
                 // If it has, dont override it
-                if (objectResult.ContentTypes.Count == 0)
+                var formatFilter = context.Filters.OfType<IFormatFilter>().LastOrDefault();
+                if (formatFilter == null || formatFilter.GetContentTypeForCurrentRequest(context) == null)
                 {
                     SetContentTypes(objectResult.ContentTypes);
                 }
